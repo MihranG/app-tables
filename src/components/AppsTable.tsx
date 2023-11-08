@@ -1,10 +1,11 @@
 import {Table, TablePaginationConfig} from "antd";
 import {useState, FC, useEffect} from "react";
-import {FilterValue, SorterResult} from "antd/es/table/interface";
+import {FilterValue} from "antd/es/table/interface";
 import {ColumnsType} from "antd/lib/table";
 import {IAllAppsResponse, IAppRow} from "../types.ts";
 import {getAllApps} from "../api.ts";
 import {AxiosResponse} from "axios";
+import AppModal from "./AppModal.tsx";
 interface TableParams {
     pagination?: TablePaginationConfig;
     sortField?: string;
@@ -16,32 +17,34 @@ const columns: ColumnsType<IAppRow> = [
     {
         title: 'Name',
         dataIndex: 'appName',
-        sorter: true,
         render: (name) => `${name}`,
         width: '20%',
+        sorter: (a, b) => {
+            return a.appName.localeCompare(b.appName)
+        },
     },
+
     {
         title: 'Category',
         dataIndex: 'category',
-        sorter: true,
         render: (category) => `${category}`,
         width: '40%',
+        sorter: (a, b) => a.category.localeCompare(b.category)
     },
     {
         title: 'Connector',
         dataIndex: 'appSources',
-        sorter: true,
         render: (sources) => sources.map((s: string)=>(`${s} `)),
         width: '40%',
     },
     ]
 const AppsTable: FC = () =>{
-    const [loading, setLoading] = useState(false);
     const [tableParams, setTableParams] = useState<TableParams>({
         pagination: {
             current: 1,
             pageSize: 25,
         },
+        // todo figure out way in antd to have custom pagination and after next fetch another part of data
     });
     const [data, setData] = useState<IAppRow[]>([])
     useEffect(()=>{
@@ -52,24 +55,35 @@ const AppsTable: FC = () =>{
         })
     },[])
 
+    const [modalId, setModalId] = useState('')
+
     const handleTableChange = (
         pagination: TablePaginationConfig,
-        filters: Record<string, FilterValue>,
-        sorter: SorterResult<IAppRow>,
     )=>{
+        console.log('handleTableChange', pagination)
         setTableParams({
             pagination,
-            filters,
-            ...sorter,
         });
     }
-    return <Table
+
+    const onRowClick = (record: IAppRow) => {
+       setModalId(record.appId)
+    }
+    return<>
+        <Table
             columns={columns}
             dataSource={data}
             pagination={tableParams.pagination}
-            loading={loading}
             onChange={handleTableChange}
-        />
+            onRow={(r: IAppRow)=>({onClick:()=>{
+                    onRowClick(r)
+                }
+            })}
+            rowKey={(record) => record.appId}
+
+    />
+        <AppModal appId={modalId} setModalId={setModalId}/>
+    </>
 }
 
 export default AppsTable

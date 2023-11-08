@@ -1,5 +1,4 @@
 import axios from "axios";
-const apiBase = 'https://46be-188-13-243-49.ngrok-free.app/api/v1/app-service';
 const apiBaseForProxy = 'api/v1/app-service';
 
 const axiosInstance  =  axios.create({
